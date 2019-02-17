@@ -1,33 +1,67 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Resources;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace 剪切板EX
 {
     public partial class 主窗口 : Form
     {
+        private String 配置文件路径 = "./剪切板EX.exe.config";
         private int 鼠标y坐标;
         private int 鼠标滚轮参数;
-        private int 剪切板最大数量 = 50;
-        private int 按钮高度 = 60;
-        private int 窗口高度 = 200;
+        private int 剪切板最大数量;
+        private int 按钮高度;
+        private int 窗口高度;
 
         public 主窗口()
         {
             InitializeComponent();
 
-            设置鼠标钩子();
-            设置定时器();
-            设置监听剪切板();
+            设置参数();
             显示();
+            设置模板();
+            设置定时器();
+            设置鼠标钩子();
+            设置剪切板钩子();
+
+            BeginInvoke(new Action(() =>
+            {
+                隐藏();
+            }));
         }
+
+        private void 设置参数()
+        {
+            foreach (XElement item in XDocument.Load(配置文件路径).Root.Element("config").Elements())
+            {
+                if (item.Name.ToString() == "剪切板最大数量")
+                    剪切板最大数量 = int.Parse(item.Value);
+                else if (item.Name.ToString() == "按钮高度")
+                    按钮高度 = int.Parse(item.Value);
+                else if (item.Name.ToString() == "窗口高度")
+                    窗口高度 = int.Parse(item.Value);
+            }
+        }
+
+        private void 设置模板()
+        {
+            foreach (XElement item in XDocument.Load(配置文件路径).Root.Element("template").Elements())
+                添加右边按钮(item.Value);
+        }
+
         ~主窗口()
         {
             设置取消监听剪切板();
@@ -38,7 +72,7 @@ namespace 剪切板EX
             RemoveClipboardFormatListener(this.Handle);
         }
 
-        private void 设置监听剪切板()
+        private void 设置剪切板钩子()
         {
             AddClipboardFormatListener(this.Handle);
         }
@@ -57,7 +91,7 @@ namespace 剪切板EX
 
         void 设置定时器()
         {
-            Timer t = new Timer();
+            System.Windows.Forms.Timer t = new System.Windows.Forms.Timer();
             t.Interval = 100;
             t.Tick += new EventHandler(回调_定时器);
             t.Enabled = true;
@@ -79,28 +113,42 @@ namespace 剪切板EX
             Visible = false;
         }
 
-        List<Button> 左边按钮 = new List<Button>();
-        List<Button> 右边按钮 = new List<Button>();
+        List<Button> 左边按钮组 = new List<Button>();
+        List<Button> 右边按钮组 = new List<Button>();
+        enum 位置 { 左边, 右边 }
+
+        void 添加右边按钮(String str)
+        {
+            添加按钮(str, 位置.右边);
+        }
 
         void 添加左边按钮(String str)
         {
+            添加按钮(str, 位置.左边);
+        }
+
+        void 添加按钮(String str, 位置 输入位置)
+        {
+            FlowLayoutPanel 控件 = 输入位置 == 位置.左边 ? 控件_左边 : 控件_右边;
+            List<Button> 按钮组 = 输入位置 == 位置.左边 ? 左边按钮组 : 右边按钮组;
+
             var button = new Button();
             button.Text = str;
-            button.Width = 控件_左边.Width - 2;
+            button.Width = 控件.Width - 2;
             button.Height = 按钮高度;
             button.Margin = new Padding(0);
             button.Click += 回调_按钮点击;
             button.TextAlign = ContentAlignment.TopLeft;
 
-            for (var i = 0; i < 左边按钮.Count; i++)
-                if (左边按钮[i].Text == str)
-                    左边按钮.RemoveAt(i);
+            for (var i = 0; i < 按钮组.Count; i++)
+                if (按钮组[i].Text == str)
+                    按钮组.RemoveAt(i);
 
-            左边按钮.Insert(0, button);
-            while (左边按钮.Count > 剪切板最大数量)
-                左边按钮.RemoveAt(左边按钮.Count - 1);
+            按钮组.Insert(0, button);
+            while (按钮组.Count > 剪切板最大数量)
+                按钮组.RemoveAt(按钮组.Count - 1);
 
-            渲染左边();
+            渲染(输入位置);
         }
 
         private void 回调_按钮点击(object sender, EventArgs e)
@@ -109,21 +157,27 @@ namespace 剪切板EX
             隐藏();
         }
 
-        void 渲染左边()
+        void 渲染(位置 输入位置)
         {
-            if (控件_左边.Controls.Count == 0)
+            FlowLayoutPanel 控件 = 输入位置 == 位置.左边 ? 控件_左边 : 控件_右边;
+            List<Button> 按钮组 = 输入位置 == 位置.左边 ? 左边按钮组 : 右边按钮组;
+
+            if (控件.Controls.Count == 0)
             {
-                渲染左边_添加(0);
+                渲染_添加(输入位置);
                 return;
             }
-            while (控件_左边.Controls[控件_左边.Controls.Count - 1].Text != 左边按钮[左边按钮.Count - 1].Text)
-                控件_左边.Controls.RemoveAt(控件_左边.Controls.Count - 1);
-            渲染左边_添加(0);
+            while (控件.Controls[控件.Controls.Count - 1].Text != 按钮组[按钮组.Count - 1].Text)
+                控件.Controls.RemoveAt(控件.Controls.Count - 1);
+            渲染_添加(输入位置);
         }
-        void 渲染左边_添加(int start)
+        void 渲染_添加(位置 输入位置)
         {
-            for (var i = start; i < 左边按钮.Count; i++)
-                控件_左边.Controls.Add(左边按钮[i]);
+            FlowLayoutPanel 控件 = 输入位置 == 位置.左边 ? 控件_左边 : 控件_右边;
+            List<Button> 按钮组 = 输入位置 == 位置.左边 ? 左边按钮组 : 右边按钮组;
+
+            for (var i = 0; i < 按钮组.Count; i++)
+                控件.Controls.Add(按钮组[i]);
         }
 
         void 回调_定时器(object sender, EventArgs e)
