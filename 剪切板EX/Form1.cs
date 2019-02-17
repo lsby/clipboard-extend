@@ -64,10 +64,10 @@ namespace 剪切板EX
 
         ~主窗口()
         {
-            设置取消监听剪切板();
+            设置取消剪切板钩子();
         }
 
-        private void 设置取消监听剪切板()
+        private void 设置取消剪切板钩子()
         {
             RemoveClipboardFormatListener(this.Handle);
         }
@@ -131,6 +131,9 @@ namespace 剪切板EX
         {
             FlowLayoutPanel 控件 = 输入位置 == 位置.左边 ? 控件_左边 : 控件_右边;
             List<Button> 按钮组 = 输入位置 == 位置.左边 ? 左边按钮组 : 右边按钮组;
+
+            if (控件.Controls.Count != 0 && str == 控件.Controls[0].Text)
+                return;
 
             var button = new Button();
             button.Text = str;
