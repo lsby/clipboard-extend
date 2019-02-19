@@ -14,7 +14,7 @@ namespace 剪切板EX
         static void Main()
         {
             bool isRuned;
-            System.Threading.Mutex mutex = new System.Threading.Mutex(true, "OnlyRunOneInstance", out isRuned);
+            System.Threading.Mutex mutex = new System.Threading.Mutex(true, "ClipboardEX_Instance", out isRuned);
             if (isRuned)
             {
                 Application.EnableVisualStyles();
