@@ -25,6 +25,8 @@ namespace 剪切板EX
         private int 剪切板最大数量;
         private int 按钮高度;
         private int 窗口高度;
+        private int 边界阈值 = 5;
+        private List<int> 边界值 = new List<int>();
 
         public 主窗口()
         {
@@ -36,11 +38,26 @@ namespace 剪切板EX
             设置定时器();
             设置鼠标钩子();
             设置剪切板钩子();
+            设置边界值();
 
             BeginInvoke(new Action(() =>
             {
                 隐藏();
             }));
+        }
+
+        private void 设置边界值()
+        {
+            foreach (var s in Screen.AllScreens)
+                边界值.Add(s.Bounds.Y);
+        }
+        private bool 是否在触发范围内(int y)
+        {
+
+            foreach (var 边界 in 边界值)
+                if (y < 边界 + 边界阈值 && y >= 边界)
+                    return true;
+            return false;
         }
 
         private void 设置参数()
@@ -187,7 +204,7 @@ namespace 剪切板EX
         {
             if (!Bounds.Contains(MousePosition) && MouseButtons == MouseButtons.Left)
                 隐藏();
-            else if (鼠标y坐标 <= 0 && 鼠标滚轮参数 < 0)
+            else if (是否在触发范围内(鼠标y坐标) && 鼠标滚轮参数 < 0)
                 显示();
             else if (鼠标y坐标 <= 0 && 鼠标滚轮参数 > 0)
                 隐藏();
