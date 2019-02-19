@@ -75,8 +75,12 @@ namespace 剪切板EX
 
         private void 设置模板()
         {
+            var arr = new List<String>();
             foreach (XElement item in XDocument.Load(配置文件路径).Root.Element("template").Elements())
-                添加右边按钮(item.Value);
+                arr.Add(item.Value);
+            arr.Reverse();
+            foreach (var s in arr)
+                添加右边按钮(s);
         }
 
         ~主窗口()
@@ -160,15 +164,13 @@ namespace 剪切板EX
             button.Click += 回调_按钮点击;
             button.TextAlign = ContentAlignment.TopLeft;
 
-            for (var i = 0; i < 按钮组.Count; i++)
-                if (按钮组[i].Text == str)
-                    按钮组.RemoveAt(i);
-
             按钮组.Insert(0, button);
             while (按钮组.Count > 剪切板最大数量)
                 按钮组.RemoveAt(按钮组.Count - 1);
 
-            渲染(输入位置);
+            控件.Controls.Clear();
+            for (var i = 0; i < 按钮组.Count; i++)
+                控件.Controls.Add(按钮组[i]);
         }
 
         private void 回调_按钮点击(object sender, EventArgs e)
@@ -177,36 +179,13 @@ namespace 剪切板EX
             隐藏();
         }
 
-        void 渲染(位置 输入位置)
-        {
-            FlowLayoutPanel 控件 = 输入位置 == 位置.左边 ? 控件_左边 : 控件_右边;
-            List<Button> 按钮组 = 输入位置 == 位置.左边 ? 左边按钮组 : 右边按钮组;
-
-            if (控件.Controls.Count == 0)
-            {
-                渲染_添加(输入位置);
-                return;
-            }
-            while (控件.Controls[控件.Controls.Count - 1].Text != 按钮组[按钮组.Count - 1].Text)
-                控件.Controls.RemoveAt(控件.Controls.Count - 1);
-            渲染_添加(输入位置);
-        }
-        void 渲染_添加(位置 输入位置)
-        {
-            FlowLayoutPanel 控件 = 输入位置 == 位置.左边 ? 控件_左边 : 控件_右边;
-            List<Button> 按钮组 = 输入位置 == 位置.左边 ? 左边按钮组 : 右边按钮组;
-
-            for (var i = 0; i < 按钮组.Count; i++)
-                控件.Controls.Add(按钮组[i]);
-        }
-
         void 回调_定时器(object sender, EventArgs e)
         {
             if (!Bounds.Contains(MousePosition) && MouseButtons == MouseButtons.Left)
                 隐藏();
             else if (是否在触发范围内(鼠标y坐标) && 鼠标滚轮参数 < 0)
                 显示();
-            else if (鼠标y坐标 <= 0 && 鼠标滚轮参数 > 0)
+            else if (是否在触发范围内(鼠标y坐标) && 鼠标滚轮参数 > 0)
                 隐藏();
         }
 
