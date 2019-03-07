@@ -24,7 +24,6 @@ namespace 剪切板EX
         private int 鼠标滚轮参数;
         private int 剪切板最大数量;
         private int 按钮高度;
-        private int 窗口高度;
         private int 边界阈值 = 5;
         private List<int> 边界值 = new List<int>();
 
@@ -68,8 +67,6 @@ namespace 剪切板EX
                     剪切板最大数量 = int.Parse(item.Value);
                 else if (item.Name.ToString() == "按钮高度")
                     按钮高度 = int.Parse(item.Value);
-                else if (item.Name.ToString() == "窗口高度")
-                    窗口高度 = int.Parse(item.Value);
             }
         }
 
@@ -124,7 +121,7 @@ namespace 剪切板EX
 
             this.TopMost = true;
             Width = Screen.PrimaryScreen.Bounds.Width;
-            Height = 窗口高度;
+            Height = Screen.PrimaryScreen.Bounds.Height;
             Location = new Point(0, 0);
             控件_sp.SplitterDistance = this.Width / 2;
         }
