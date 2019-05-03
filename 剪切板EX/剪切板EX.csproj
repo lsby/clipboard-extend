@@ -70,6 +70,7 @@
     <Compile Include="带有剪切板回调的窗口.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="模板文本管理者.cs" />
     <Compile Include="界面管理者.cs" />
     <Compile Include="鼠标事件管理者.cs" />
     <Compile Include="鼠标键盘钩子.cs" />
